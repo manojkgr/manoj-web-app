@@ -1,10 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>My Sample App</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Dashboard</title>
+    <link rel="stylesheet" href="assets/styles.css" />
   </head>
   <body>
-    <h1>Hello from GitHub Pages!</h1>
-    <p>This is a simple web app hosted on GitHub.</p>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">₹</span>
+        <div>
+          <h1>Expense Dashboard</h1>
+          <p class="subtitle">Upload your spending data to see where the money is really going</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <label class="btn btn-primary" for="fileInput">
+          Upload Excel / CSV
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+        </label>
+        <button id="loadSampleBtn" class="btn btn-ghost">Try sample data</button>
+      </div>
+    </header>
+
+    <main id="app">
+      <section id="emptyState" class="empty-state">
+        <div class="empty-card">
+          <h2>No data loaded yet</h2>
+          <p>
+            Upload an Excel (.xlsx/.xls) or CSV file with columns like
+            <strong>Date</strong>, <strong>Category</strong>, <strong>Description</strong> and
+            <strong>Amount</strong>. Don't have a file handy? Click
+            <strong>"Try sample data"</strong> above to see the dashboard in action.
+          </p>
+          <div id="dropZone" class="drop-zone">Or drag &amp; drop a file here</div>
+        </div>
+      </section>
+
+      <section id="mappingPanel" class="panel hidden">
+        <h2>Confirm column mapping</h2>
+        <p class="muted">We tried to auto-detect your columns. Adjust if anything looks wrong, then continue.</p>
+        <div class="mapping-grid">
+          <label>Date column
+            <select id="mapDate"></select>
+          </label>
+          <label>Category column
+            <select id="mapCategory"></select>
+          </label>
+          <label>Description column
+            <select id="mapDescription"></select>
+          </label>
+          <label>Amount column
+            <select id="mapAmount"></select>
+          </label>
+        </div>
+        <button id="confirmMappingBtn" class="btn btn-primary">Build dashboard</button>
+      </section>
+
+      <section id="dashboard" class="hidden">
+        <div class="toolbar">
+          <div class="control">
+            <label for="thresholdSlider">Flag categories above
+              <strong id="thresholdValue">15%</strong> of total spend
+            </label>
+            <input type="range" id="thresholdSlider" min="5" max="40" value="15" step="1" />
+          </div>
+          <div class="control">
+            <label for="monthFilter">Month</label>
+            <select id="monthFilter">
+              <option value="all">All months</option>
+            </select>
+          </div>
+          <button id="resetBtn" class="btn btn-ghost">Load different file</button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total spend</span>
+            <span class="stat-value" id="statTotal">₹0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Transactions</span>
+            <span class="stat-value" id="statCount">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Average transaction</span>
+            <span class="stat-value" id="statAvg">₹0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Top category</span>
+            <span class="stat-value" id="statTopCategory">—</span>
+          </div>
+          <div class="stat-card stat-card-warning">
+            <span class="stat-label">Categories needing control</span>
+            <span class="stat-value" id="statFlagged">0</span>
+          </div>
+        </div>
+
+        <section id="alertsSection" class="panel">
+          <h2>⚠ Major spend — needs your attention</h2>
+          <p class="muted">Categories consuming a large share of your total spend. Consider setting a budget cap for these.</p>
+          <div id="alertsList" class="alerts-list"></div>
+        </section>
+
+        <div class="chart-row">
+          <div class="panel chart-panel">
+            <h2>Spend by category</h2>
+            <canvas id="categoryChart"></canvas>
+          </div>
+          <div class="panel chart-panel">
+            <h2>Category share of total</h2>
+            <canvas id="categoryDoughnut"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Monthly spend trend</h2>
+          <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <h2>Top 15 individual transactions</h2>
+          <div class="table-wrap">
+            <table id="topTransactionsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th class="num">Amount</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>All categories</h2>
+          <div class="table-wrap">
+            <table id="categoryTable">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th class="num">Transactions</th>
+                  <th class="num">Total spend</th>
+                  <th class="num">% of total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>All parsing happens locally in your browser — your expense data is never uploaded anywhere.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+    <script src="assets/app.js"></script>
   </body>
 </html>
