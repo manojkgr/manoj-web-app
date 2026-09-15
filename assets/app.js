@@ -15,6 +15,37 @@
     maximumFractionDigits: 0,
   });
 
+  const AUTO_CATEGORY_VALUE = "__auto__";
+
+  // Bank/card statement exports rarely include a Category column (only a
+  // merchant name). When no such column is found, transactions are grouped
+  // by matching merchant/description text against these keyword rules,
+  // in order, instead of leaving spend uncategorized.
+  const MERCHANT_CATEGORY_RULES = [
+    { category: "Groceries", keywords: ["grocer", "grocery", "market", "supermarket", "trader joe", "whole food", "wholefds", "stop & shop", "stop and shop", "shoprite", "weis market", "kroger", "safeway", "aldi", "publix", "wegmans", "hannaford", "food lion", "giant food", "vons", "harris teeter", "winn-dixie", "bazar", "bazaar"] },
+    { category: "Warehouse Club", keywords: ["costco", "sam's club", "sams club", "bj's wholesale", "bjs wholesale"] },
+    { category: "Dining Out", keywords: ["grill", "restaurant", "cafe", "café", "pizza", "bistro", "diner", "kitchen", "eatery", "bbq", "taco", "sushi", "dosa", "spice", "panera", "starbucks", "dunkin", "mcdonald", "burger", "wendy", "chipotle", "subway", "frog yog", "sweet frog", "hut"] },
+    { category: "Convenience Store", keywords: ["7-eleven", "7-11", "circle k", "wawa", "quiktrip"] },
+    { category: "Pharmacy & Health", keywords: ["cvs", "walgreens", "pharmacy", "rite aid", "doctor", "clinic", "medical"] },
+    { category: "Fuel & Transport", keywords: ["fuel", "gas station", " shell ", "exxon", "mobil", " bp ", "chevron", "sunoco", "uber", "lyft"] },
+    { category: "Home Improvement", keywords: ["home depot", "lowe's", "lowes", "hdwe", "hardware", "ace hardware"] },
+    { category: "Home Services", keywords: ["trugreen", "lawn", "pest control", "plumb", "hvac"] },
+    { category: "Travel & Lodging", keywords: ["hotel", "inn ", "motel", "courtyard", "marriott", "hilton", "airport", "airlines", "aramark"] },
+    { category: "Alcohol & Liquor", keywords: ["liquor", "wine", "spirits", "bottle king", "beverage"] },
+    { category: "Catering & Events", keywords: ["catering", "caterer", "banquet"] },
+    { category: "Retail & Shopping", keywords: ["target", "walmart", "amazon", "best buy", "macy", "kohl", "tj maxx", "marshalls"] },
+    { category: "Utilities", keywords: ["electric", "utility", "water bill", "internet", "broadband"] },
+    { category: "Subscriptions", keywords: ["netflix", "spotify", "prime video", "subscription", "membership"] },
+  ];
+
+  function inferCategory(text) {
+    const t = ` ${String(text || "").toLowerCase()} `;
+    for (const rule of MERCHANT_CATEGORY_RULES) {
+      if (rule.keywords.some((kw) => t.includes(kw))) return rule.category;
+    }
+    return "Other / Uncategorized";
+  }
+
   const SAMPLE_CSV_ROWS = [
     ["Date", "Category", "Description", "Amount"],
     ["2026-06-02", "Rent", "Monthly apartment rent", 32000],
@@ -174,8 +205,14 @@
       });
     });
 
+    const autoOpt = document.createElement("option");
+    autoOpt.value = AUTO_CATEGORY_VALUE;
+    autoOpt.textContent = "✨ No category column — auto-detect from description";
+    mapCategory.insertBefore(autoOpt, mapCategory.firstChild);
+
+    const detectedCategory = guessColumn("category");
     mapDate.value = guessColumn("date") || headers[0];
-    mapCategory.value = guessColumn("category") || headers[0];
+    mapCategory.value = detectedCategory || AUTO_CATEGORY_VALUE;
     mapDescription.value = guessColumn("description") || headers[0];
     mapAmount.value = guessColumn("amount") || headers[0];
   }
@@ -238,8 +275,11 @@
       const amount = parseAmount(row[cols.amount]);
       if (isNaN(amount) || amount <= 0) continue;
       const date = parseDate(row[cols.date]);
-      const category = String(row[cols.category] || "Uncategorized").trim() || "Uncategorized";
       const description = String(row[cols.description] || "").trim();
+      const category =
+        cols.category === AUTO_CATEGORY_VALUE
+          ? inferCategory(description)
+          : String(row[cols.category] || "Uncategorized").trim() || "Uncategorized";
       out.push({ date, category, description, amount });
     }
     return out;
