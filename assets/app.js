@@ -391,9 +391,10 @@
   function groupByCategory(data) {
     const map = {};
     data.forEach((t) => {
-      if (!map[t.category]) map[t.category] = { total: 0, count: 0 };
+      if (!map[t.category]) map[t.category] = { total: 0, count: 0, txns: [] };
       map[t.category].total += t.amount;
       map[t.category].count += 1;
+      map[t.category].txns.push(t);
     });
     return map;
   }
@@ -530,6 +531,8 @@
       .join("");
   }
 
+  const expandedCategories = new Set();
+
   function renderCategoryTable(sortedCategories, total, threshold) {
     const tbody = document.querySelector("#categoryTable tbody");
     tbody.innerHTML = sortedCategories
@@ -538,17 +541,49 @@
         let badge = `<span class="badge badge-ok">Under control</span>`;
         if (pct >= threshold) badge = `<span class="badge badge-high">Needs control</span>`;
         else if (pct >= threshold * 0.66) badge = `<span class="badge badge-watch">Watch</span>`;
+        const isExpanded = expandedCategories.has(category);
+        const sortedTxns = [...v.txns].sort((a, b) => b.amount - a.amount);
+        const detailRows = sortedTxns
+          .map(
+            (t) => `
+            <tr>
+              <td>${t.date ? t.date.toLocaleDateString("en-IN") : "—"}</td>
+              <td>${escapeHtml(t.description) || "—"}</td>
+              <td class="num">${CURRENCY_FORMAT.format(t.amount)}</td>
+            </tr>`
+          )
+          .join("");
         return `
-        <tr>
-          <td>${escapeHtml(category)}</td>
+        <tr class="category-row${isExpanded ? " expanded" : ""}" data-category="${escapeHtml(category)}">
+          <td><span class="chevron">▸</span>${escapeHtml(category)}</td>
           <td class="num">${v.count}</td>
           <td class="num">${CURRENCY_FORMAT.format(v.total)}</td>
           <td class="num">${pct.toFixed(1)}%</td>
           <td>${badge}</td>
+        </tr>
+        <tr class="category-detail-row${isExpanded ? "" : " hidden"}" data-category-detail="${escapeHtml(category)}">
+          <td colspan="5">
+            <table class="category-detail-table">
+              <thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr></thead>
+              <tbody>${detailRows}</tbody>
+            </table>
+          </td>
         </tr>`;
       })
       .join("");
   }
+
+  document.querySelector("#categoryTable tbody").addEventListener("click", (e) => {
+    const row = e.target.closest(".category-row");
+    if (!row) return;
+    const category = row.dataset.category;
+    const detailRow = document.querySelector(`[data-category-detail="${CSS.escape(category)}"]`);
+    if (!detailRow) return;
+    const nowExpanded = detailRow.classList.toggle("hidden") === false;
+    row.classList.toggle("expanded", nowExpanded);
+    if (nowExpanded) expandedCategories.add(category);
+    else expandedCategories.delete(category);
+  });
 
   function escapeHtml(str) {
     const div = document.createElement("div");
