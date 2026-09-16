@@ -338,6 +338,16 @@ select {
   max-height: 320px;
 }
 
+.chart-fallback {
+  margin: 12px 0 0;
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .table-wrap {
   overflow-x: auto;
   margin-top: 12px;

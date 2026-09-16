@@ -333,11 +333,48 @@
 
     renderStats(data, total, sortedCategories, threshold);
     renderAlerts(sortedCategories, total, threshold);
-    renderCategoryChart(sortedCategories);
-    renderDoughnutChart(sortedCategories, total);
-    renderTrendChart(data);
+    renderCharts(sortedCategories, total, data);
     renderTopTransactions(data);
     renderCategoryTable(sortedCategories, total, threshold);
+  }
+
+  // Chart.js is loaded from a CDN; a blocked network, ad-blocker, or
+  // firewall can prevent it from loading. Isolate chart rendering so that
+  // failure never blanks out the stats, alerts, or tables below it.
+  function renderCharts(sortedCategories, total, data) {
+    resetChartFallback();
+    if (typeof Chart === "undefined") {
+      showChartFallback("Charts couldn't load — your browser or network blocked the chart library (cdnjs.cloudflare.com). Totals and tables below are unaffected.");
+      return;
+    }
+    try {
+      renderCategoryChart(sortedCategories);
+      renderDoughnutChart(sortedCategories, total);
+      renderTrendChart(data);
+    } catch (err) {
+      console.error("Chart rendering failed:", err);
+      showChartFallback("Charts failed to render. Totals and tables below are unaffected.");
+    }
+  }
+
+  function resetChartFallback() {
+    ["categoryChart", "categoryDoughnut", "trendChart"].forEach((id) => {
+      const canvas = el(id);
+      canvas.hidden = false;
+      const note = canvas.nextElementSibling;
+      if (note && note.classList.contains("chart-fallback")) note.remove();
+    });
+  }
+
+  function showChartFallback(message) {
+    ["categoryChart", "categoryDoughnut", "trendChart"].forEach((id) => {
+      const canvas = el(id);
+      canvas.hidden = true;
+      const note = document.createElement("p");
+      note.className = "chart-fallback";
+      note.textContent = message;
+      canvas.insertAdjacentElement("afterend", note);
+    });
   }
 
   function groupByCategory(data) {
