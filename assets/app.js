@@ -537,6 +537,20 @@
   }
 
   const expandedCategories = new Set();
+  const expandedShops = new Set();
+  const shopKey = (category, shop) => `${category}␟${shop}`;
+
+  function groupByShop(txns) {
+    const map = {};
+    txns.forEach((t) => {
+      const key = t.description || "(no description)";
+      if (!map[key]) map[key] = { total: 0, count: 0, txns: [] };
+      map[key].total += t.amount;
+      map[key].count += 1;
+      map[key].txns.push(t);
+    });
+    return map;
+  }
 
   function renderCategoryTable(sortedCategories, total, threshold) {
     const tbody = document.querySelector("#categoryTable tbody");
@@ -547,17 +561,40 @@
         if (pct >= threshold) badge = `<span class="badge badge-high">Needs control</span>`;
         else if (pct >= threshold * 0.66) badge = `<span class="badge badge-watch">Watch</span>`;
         const isExpanded = expandedCategories.has(category);
-        const sortedTxns = [...v.txns].sort((a, b) => b.amount - a.amount);
-        const detailRows = sortedTxns
-          .map(
-            (t) => `
-            <tr>
-              <td>${t.date ? t.date.toLocaleDateString(DATE_LOCALE) : "—"}</td>
-              <td>${escapeHtml(t.description) || "—"}</td>
-              <td class="num">${CURRENCY_FORMAT.format(t.amount)}</td>
-            </tr>`
-          )
+
+        const byShop = groupByShop(v.txns);
+        const sortedShops = Object.entries(byShop).sort((a, b) => b[1].total - a[1].total);
+        const shopRows = sortedShops
+          .map(([shop, s]) => {
+            const sKey = shopKey(category, shop);
+            const shopExpanded = expandedShops.has(sKey);
+            const sortedShopTxns = [...s.txns].sort((a, b) => b.amount - a.amount);
+            const txnRows = sortedShopTxns
+              .map(
+                (t) => `
+                <tr>
+                  <td>${t.date ? t.date.toLocaleDateString(DATE_LOCALE) : "—"}</td>
+                  <td class="num">${CURRENCY_FORMAT.format(t.amount)}</td>
+                </tr>`
+              )
+              .join("");
+            return `
+            <tr class="shop-row${shopExpanded ? " expanded" : ""}" data-shop-key="${escapeHtml(sKey)}">
+              <td><span class="chevron">▸</span>${escapeHtml(shop) || "—"}</td>
+              <td class="num">${s.count}</td>
+              <td class="num">${CURRENCY_FORMAT.format(s.total)}</td>
+            </tr>
+            <tr class="shop-detail-row${shopExpanded ? "" : " hidden"}" data-shop-detail="${escapeHtml(sKey)}">
+              <td colspan="3">
+                <table class="shop-detail-table">
+                  <thead><tr><th>Date</th><th class="num">Amount</th></tr></thead>
+                  <tbody>${txnRows}</tbody>
+                </table>
+              </td>
+            </tr>`;
+          })
           .join("");
+
         return `
         <tr class="category-row${isExpanded ? " expanded" : ""}" data-category="${escapeHtml(category)}">
           <td><span class="chevron">▸</span>${escapeHtml(category)}</td>
@@ -568,9 +605,9 @@
         </tr>
         <tr class="category-detail-row${isExpanded ? "" : " hidden"}" data-category-detail="${escapeHtml(category)}">
           <td colspan="5">
-            <table class="category-detail-table">
-              <thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr></thead>
-              <tbody>${detailRows}</tbody>
+            <table class="category-detail-table shop-table">
+              <thead><tr><th>Shop / merchant</th><th class="num">Txns</th><th class="num">Amount</th></tr></thead>
+              <tbody>${shopRows}</tbody>
             </table>
           </td>
         </tr>`;
@@ -579,6 +616,18 @@
   }
 
   document.querySelector("#categoryTable tbody").addEventListener("click", (e) => {
+    const shopRow = e.target.closest(".shop-row");
+    if (shopRow) {
+      const key = shopRow.dataset.shopKey;
+      const detailRow = document.querySelector(`[data-shop-detail="${CSS.escape(key)}"]`);
+      if (!detailRow) return;
+      const nowExpanded = detailRow.classList.toggle("hidden") === false;
+      shopRow.classList.toggle("expanded", nowExpanded);
+      if (nowExpanded) expandedShops.add(key);
+      else expandedShops.delete(key);
+      return;
+    }
+
     const row = e.target.closest(".category-row");
     if (!row) return;
     const category = row.dataset.category;
