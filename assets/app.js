@@ -9,11 +9,17 @@
     amount: ["amount", "debit", "value", "cost", "spend", "amount (inr)", "amount (rs)", "withdrawal"],
   };
 
-  const CURRENCY_FORMAT = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  });
+  const CURRENCY_LOCALES = { USD: "en-US", INR: "en-IN", EUR: "en-IE", GBP: "en-GB" };
+
+  function buildCurrencyFormat(code) {
+    return new Intl.NumberFormat(CURRENCY_LOCALES[code] || "en-US", {
+      style: "currency",
+      currency: code,
+      maximumFractionDigits: 0,
+    });
+  }
+
+  let CURRENCY_FORMAT = buildCurrencyFormat("USD");
 
   const AUTO_CATEGORY_VALUE = "__auto__";
 
@@ -113,6 +119,7 @@
   const thresholdSlider = el("thresholdSlider");
   const thresholdValue = el("thresholdValue");
   const monthFilter = el("monthFilter");
+  const currencySelect = el("currencySelect");
   const resetBtn = el("resetBtn");
 
   // ---------- File handling ----------
@@ -313,6 +320,10 @@
   monthFilter.addEventListener("change", renderDashboard);
   thresholdSlider.addEventListener("input", () => {
     thresholdValue.textContent = `${thresholdSlider.value}%`;
+    renderDashboard();
+  });
+  currencySelect.addEventListener("change", () => {
+    CURRENCY_FORMAT = buildCurrencyFormat(currencySelect.value);
     renderDashboard();
   });
 

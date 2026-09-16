@@ -9,7 +9,7 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">₹</span>
+        <span class="brand-mark">💰</span>
         <div>
           <h1>Expense Dashboard</h1>
           <p class="subtitle">Upload your spending data to see where the money is really going</p>
@@ -72,13 +72,22 @@
               <option value="all">All months</option>
             </select>
           </div>
+          <div class="control">
+            <label for="currencySelect">Currency</label>
+            <select id="currencySelect">
+              <option value="USD">$ USD</option>
+              <option value="INR">₹ INR</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+            </select>
+          </div>
           <button id="resetBtn" class="btn btn-ghost">Load different file</button>
         </div>
 
         <div class="stat-grid">
           <div class="stat-card">
             <span class="stat-label">Total spend</span>
-            <span class="stat-value" id="statTotal">₹0</span>
+            <span class="stat-value" id="statTotal">$0</span>
           </div>
           <div class="stat-card">
             <span class="stat-label">Transactions</span>
@@ -86,7 +95,7 @@
           </div>
           <div class="stat-card">
             <span class="stat-label">Average transaction</span>
-            <span class="stat-value" id="statAvg">₹0</span>
+            <span class="stat-value" id="statAvg">$0</span>
           </div>
           <div class="stat-card">
             <span class="stat-label">Top category</span>
@@ -161,8 +170,46 @@
       <p>All parsing happens locally in your browser — your expense data is never uploaded anywhere.</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-    <script src="assets/app.js"></script>
+    <script>
+      // Some networks/ad-blockers block cdnjs.cloudflare.com specifically
+      // (or one library's path) while allowing everything else. Fall back
+      // to a second CDN automatically instead of leaving the library
+      // missing, so the dashboard still gets real charts/parsing when
+      // possible, rather than relying only on the in-app graceful fallback.
+      function loadWithFallback(primarySrc, fallbackSrc, onDone) {
+        var script = document.createElement("script");
+        script.src = primarySrc;
+        script.onload = onDone;
+        script.onerror = function () {
+          var fallback = document.createElement("script");
+          fallback.src = fallbackSrc;
+          fallback.onload = onDone;
+          fallback.onerror = onDone;
+          document.head.appendChild(fallback);
+        };
+        document.head.appendChild(script);
+      }
+
+      var libsRemaining = 2;
+      function libLoaded() {
+        libsRemaining -= 1;
+        if (libsRemaining === 0) {
+          var appScript = document.createElement("script");
+          appScript.src = "assets/app.js";
+          document.body.appendChild(appScript);
+        }
+      }
+
+      loadWithFallback(
+        "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+        "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+        libLoaded
+      );
+      loadWithFallback(
+        "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js",
+        "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js",
+        libLoaded
+      );
+    </script>
   </body>
 </html>
