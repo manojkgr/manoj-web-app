@@ -380,11 +380,20 @@ tbody tr:hover {
   cursor: pointer;
 }
 
+.category-row:hover {
+  background: var(--bg);
+}
+
+.category-row td:first-child {
+  font-weight: 600;
+}
+
 .chevron {
   display: inline-block;
-  width: 1em;
-  margin-right: 6px;
-  color: var(--muted);
+  width: 1.1em;
+  margin-right: 8px;
+  color: var(--primary);
+  font-size: 0.85em;
   transition: transform 0.15s ease;
 }
 

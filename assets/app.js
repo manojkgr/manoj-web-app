@@ -21,6 +21,11 @@
 
   let CURRENCY_FORMAT = buildCurrencyFormat("USD");
 
+  // Dates and counts always use US conventions (MM/DD/YYYY, comma
+  // thousands) regardless of the selected display currency — the currency
+  // picker only changes the amount symbol/formatting, not the date style.
+  const DATE_LOCALE = "en-US";
+
   const AUTO_CATEGORY_VALUE = "__auto__";
 
   // Bank/card statement exports rarely include a Category column (only a
@@ -401,7 +406,7 @@
 
   function renderStats(data, total, sortedCategories, threshold) {
     el("statTotal").textContent = CURRENCY_FORMAT.format(total);
-    el("statCount").textContent = data.length.toLocaleString("en-IN");
+    el("statCount").textContent = data.length.toLocaleString(DATE_LOCALE);
     el("statAvg").textContent = CURRENCY_FORMAT.format(data.length ? total / data.length : 0);
     el("statTopCategory").textContent = sortedCategories.length ? sortedCategories[0][0] : "—";
     const flaggedCount = sortedCategories.filter(([, v]) => total > 0 && (v.total / total) * 100 >= threshold).length;
@@ -522,7 +527,7 @@
       .map(
         (t) => `
       <tr>
-        <td>${t.date ? t.date.toLocaleDateString("en-IN") : "—"}</td>
+        <td>${t.date ? t.date.toLocaleDateString(DATE_LOCALE) : "—"}</td>
         <td>${escapeHtml(t.category)}</td>
         <td>${escapeHtml(t.description) || "—"}</td>
         <td class="num">${CURRENCY_FORMAT.format(t.amount)}</td>
@@ -547,7 +552,7 @@
           .map(
             (t) => `
             <tr>
-              <td>${t.date ? t.date.toLocaleDateString("en-IN") : "—"}</td>
+              <td>${t.date ? t.date.toLocaleDateString(DATE_LOCALE) : "—"}</td>
               <td>${escapeHtml(t.description) || "—"}</td>
               <td class="num">${CURRENCY_FORMAT.format(t.amount)}</td>
             </tr>`
