@@ -432,6 +432,52 @@ tbody tr:hover {
   background: transparent;
 }
 
+.shop-table thead th:first-child,
+.shop-table tbody td:first-child {
+  padding-left: 34px;
+}
+
+.shop-row {
+  cursor: pointer;
+}
+
+.shop-row:hover td {
+  color: var(--text);
+}
+
+.shop-row .chevron {
+  width: 1em;
+  font-size: 0.8em;
+  margin-right: 6px;
+}
+
+.shop-detail-row td {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.shop-detail-row.hidden {
+  display: none;
+}
+
+.shop-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background: var(--surface);
+}
+
+.shop-detail-table th,
+.shop-detail-table td {
+  padding: 6px 12px 6px 58px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.shop-detail-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .badge {
   display: inline-block;
   padding: 3px 10px;
